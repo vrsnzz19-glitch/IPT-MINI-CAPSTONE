@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Purchase extends Model
 {
-    public const STATUS_PENDING = 'pending';
+    public const STATUS_PENDING = 'Pending';
 
-    public const STATUS_RECEIVED = 'received';
+    public const STATUS_RECEIVED = 'Received';
 
-    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_CANCELLED = 'Cancelled';
 
     public const STATUSES = [
         self::STATUS_PENDING,

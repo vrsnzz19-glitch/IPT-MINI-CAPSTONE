@@ -41,7 +41,7 @@
                         <th class="ps-3 ps-lg-4">ID</th>
                         <th>Plant</th>
                         <th>Category</th>
-                        <th>Quantity</th>
+                        <th>Stock</th>
                         <th>Price</th>
                         <th>Stock Status</th>
                         <th class="text-end pe-3 pe-lg-4">Actions</th>
@@ -52,16 +52,15 @@
                         <tr>
                             <td class="ps-3 ps-lg-4 text-secondary">{{ $plant->id }}</td>
                             <td>
-                                <div class="fw-semibold">{{ $plant->plant_name }}</div>
-                                <div class="small text-secondary">{{ $plant->scientific_name ?: '—' }}</div>
+                                <div class="fw-semibold">{{ $plant->name }}</div>
                             </td>
                             <td>{{ $plant->category->name }}</td>
-                            <td>{{ number_format($plant->quantity) }}</td>
+                            <td>{{ number_format($plant->stock) }}</td>
                             <td>₱{{ number_format((float) $plant->price, 2) }}</td>
                             <td>
-                                @if ($plant->quantity === 0)
+                                @if ($plant->stock === 0)
                                     <span class="badge text-bg-secondary">Out of Stock</span>
-                                @elseif ($plant->quantity <= 5)
+                                @elseif ($plant->stock <= 5)
                                     <span class="badge text-bg-warning">Low Stock</span>
                                 @else
                                     <span class="badge text-bg-success">In Stock</span>
@@ -69,13 +68,13 @@
                             </td>
                             <td class="text-end pe-3 pe-lg-4">
                                 <div class="d-inline-flex gap-1">
-                                    <a class="btn btn-sm btn-outline-success" href="{{ route('plants.edit', $plant) }}" aria-label="Edit {{ $plant->plant_name }}" title="Edit">
+                                    <a class="btn btn-sm btn-outline-success" href="{{ route('plants.edit', $plant) }}" aria-label="Edit {{ $plant->name }}" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form action="{{ route('plants.destroy', $plant) }}" method="POST" onsubmit="return confirm('Delete this plant from the inventory?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Delete {{ $plant->plant_name }}" title="Delete">
+                                        <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Delete {{ $plant->name }}" title="Delete">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>

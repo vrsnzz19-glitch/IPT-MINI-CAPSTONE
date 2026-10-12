@@ -52,10 +52,10 @@ class CategoryController extends Controller
 
     public function destroy(Category $category): RedirectResponse
     {
-        if ($category->plants()->exists()) {
+        if ($category->plants()->whereHas('purchaseItems')->exists()) {
             return redirect()
                 ->route('categories.index')
-                ->with('error', 'This category cannot be deleted while plants are assigned to it. Move or delete those plants first.');
+                ->with('error', 'This category cannot be deleted while its plants have purchase history.');
         }
 
         $categoryName = $category->name;
@@ -78,7 +78,6 @@ class CategoryController extends Controller
                 'max:255',
                 Rule::unique('categories', 'name')->ignore($category),
             ],
-            'description' => ['nullable', 'string', 'max:5000'],
         ];
     }
 }

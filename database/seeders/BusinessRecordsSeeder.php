@@ -16,12 +16,10 @@ class BusinessRecordsSeeder extends Seeder
     {
         $suppliers = [
             'Green Valley Plant Supply' => [
-                'contact_number' => '0917-555-0182',
-                'address' => '18 Garden Road, Quezon City',
+                'contact' => '0917-555-0182',
             ],
             'Sunrise Horticulture' => [
-                'contact_number' => '0928-555-0164',
-                'address' => '42 Orchard Avenue, Laguna',
+                'contact' => '0928-555-0164',
             ],
         ];
 
@@ -48,14 +46,14 @@ class BusinessRecordsSeeder extends Seeder
             ];
 
             foreach ($items as $item) {
-                $plant = Plant::where('plant_name', $item['plant'])->firstOrFail();
+                $plant = Plant::where('name', $item['plant'])->firstOrFail();
                 $receivedPurchase->items()->create([
                     'plant_id' => $plant->id,
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'subtotal' => number_format($item['quantity'] * (float) $item['unit_price'], 2, '.', ''),
                 ]);
-                $plant->increment('quantity', $item['quantity']);
+                $plant->increment('stock', $item['quantity']);
             }
         }
 
@@ -71,7 +69,7 @@ class BusinessRecordsSeeder extends Seeder
                 ['plant' => 'Calamansi', 'quantity' => 2, 'unit_price' => '390.00'],
                 ['plant' => 'Aloe Vera', 'quantity' => 4, 'unit_price' => '160.00'],
             ] as $item) {
-                $plant = Plant::where('plant_name', $item['plant'])->firstOrFail();
+                $plant = Plant::where('name', $item['plant'])->firstOrFail();
                 $pendingPurchase->items()->create([
                     'plant_id' => $plant->id,
                     'quantity' => $item['quantity'],

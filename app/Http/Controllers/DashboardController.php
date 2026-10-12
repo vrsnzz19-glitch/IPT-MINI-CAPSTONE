@@ -14,8 +14,8 @@ class DashboardController extends Controller
     {
         return view('dashboard', [
             'totalPlants' => Plant::count(),
-            'totalStock' => Plant::sum('quantity'),
-            'lowStockPlants' => Plant::where('quantity', '<=', 5)->count(),
+            'totalStock' => Plant::sum('stock'),
+            'lowStockPlants' => Plant::where('stock', '<=', 5)->count(),
             'totalCategories' => Category::count(),
             'totalSuppliers' => Supplier::count(),
             'totalPurchases' => Purchase::count(),

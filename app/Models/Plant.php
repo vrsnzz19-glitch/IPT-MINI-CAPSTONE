@@ -14,18 +14,16 @@ class Plant extends Model
     use HasFactory;
 
     protected $fillable = [
-        'plant_name',
-        'scientific_name',
+        'name',
         'category_id',
-        'quantity',
+        'stock',
         'price',
-        'description',
     ];
 
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
+            'stock' => 'integer',
             'price' => 'decimal:2',
         ];
     }

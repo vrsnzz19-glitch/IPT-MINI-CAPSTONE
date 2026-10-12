@@ -82,8 +82,7 @@ class SupplierController extends Controller
     {
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('suppliers', 'name')->ignore($supplier)],
-            'contact_number' => ['required', 'string', 'max:50'],
-            'address' => ['nullable', 'string', 'max:2000'],
+            'contact' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

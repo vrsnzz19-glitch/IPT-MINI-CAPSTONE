@@ -21,7 +21,7 @@ class PlantController extends Controller
         $plants = Plant::query()
             ->with('category')
             ->when($filters['search'] ?? null, function ($query, string $search): void {
-                $query->where('plant_name', 'like', '%'.$search.'%');
+                $query->where('name', 'like', '%'.$search.'%');
             })
             ->when($filters['category_id'] ?? null, function ($query, int $categoryId): void {
                 $query->where('category_id', $categoryId);
@@ -50,7 +50,7 @@ class PlantController extends Controller
 
         return redirect()
             ->route('plants.index')
-            ->with('success', "{$plant->plant_name} was added to the inventory.");
+            ->with('success', "{$plant->name} was added to the inventory.");
     }
 
     public function edit(Plant $plant): View
@@ -67,7 +67,7 @@ class PlantController extends Controller
 
         return redirect()
             ->route('plants.index')
-            ->with('success', "{$plant->plant_name} was updated.");
+            ->with('success', "{$plant->name} was updated.");
     }
 
     public function destroy(Plant $plant): RedirectResponse
@@ -78,7 +78,7 @@ class PlantController extends Controller
                 ->with('error', 'This plant cannot be deleted while purchase records refer to it.');
         }
 
-        $plantName = $plant->plant_name;
+        $plantName = $plant->name;
         $plant->delete();
 
         return redirect()
@@ -92,12 +92,10 @@ class PlantController extends Controller
     private function rules(): array
     {
         return [
-            'plant_name' => ['required', 'string', 'max:255'],
-            'scientific_name' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'category_id' => ['required', 'integer', Rule::exists('categories', 'id')],
-            'quantity' => ['required', 'integer', 'min:0'],
+            'stock' => ['required', 'integer', 'min:0'],
             'price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
-            'description' => ['nullable', 'string', 'max:5000'],
         ];
     }
 }

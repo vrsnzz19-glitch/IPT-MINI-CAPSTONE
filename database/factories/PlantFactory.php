@@ -19,12 +19,10 @@ class PlantFactory extends Factory
     public function definition(): array
     {
         return [
-            'plant_name' => fake()->unique()->words(2, true),
-            'scientific_name' => fake()->optional()->words(2, true),
+            'name' => fake()->unique()->words(2, true),
             'category_id' => Category::factory(),
-            'quantity' => fake()->numberBetween(0, 50),
+            'stock' => fake()->numberBetween(0, 50),
             'price' => fake()->randomFloat(2, 1, 500),
-            'description' => fake()->optional()->sentence(),
         ];
     }
 }

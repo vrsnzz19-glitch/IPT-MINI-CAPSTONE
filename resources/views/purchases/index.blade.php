@@ -60,7 +60,7 @@
                             <td>{{ $purchase->purchase_date->format('M j, Y') }}</td>
                             <td>
                                 <div>{{ $purchase->items->count() }} plants</div>
-                                <div class="small text-secondary">{{ $purchase->items->pluck('plant.plant_name')->filter()->take(2)->join(', ') }}{{ $purchase->items->count() > 2 ? ', …' : '' }}</div>
+                                <div class="small text-secondary">{{ $purchase->items->pluck('plant.name')->filter()->take(2)->join(', ') }}{{ $purchase->items->count() > 2 ? ', …' : '' }}</div>
                             </td>
                             <td>₱{{ number_format((float) $purchase->total_amount, 2) }}</td>
                             <td>

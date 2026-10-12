@@ -45,7 +45,7 @@ class PurchaseController extends Controller
         return view('purchases.create', [
             'purchase' => new Purchase(['purchase_date' => now()->toDateString()]),
             'suppliers' => Supplier::orderBy('name')->get(),
-            'plants' => Plant::orderBy('plant_name')->get(),
+            'plants' => Plant::orderBy('name')->get(),
             'purchaseItems' => [],
         ]);
     }
@@ -79,7 +79,7 @@ class PurchaseController extends Controller
         return view('purchases.edit', [
             'purchase' => $purchase->load('items.plant'),
             'suppliers' => Supplier::orderBy('name')->get(),
-            'plants' => Plant::orderBy('plant_name')->get(),
+            'plants' => Plant::orderBy('name')->get(),
             'purchaseItems' => $purchase->items,
         ]);
     }
@@ -224,15 +224,15 @@ class PurchaseController extends Controller
                 ->lockForUpdate()
                 ->findOrFail($plantId);
 
-            if ($change < 0 && $plant->quantity < abs($change)) {
+            if ($change < 0 && $plant->stock < abs($change)) {
                 throw ValidationException::withMessages([
-                    'status' => "The received quantity for {$plant->plant_name} can no longer be reversed because current stock is lower than the purchase quantity.",
+                    'status' => "The received quantity for {$plant->name} can no longer be reversed because current stock is lower than the purchase quantity.",
                 ]);
             }
 
             $change > 0
-                ? $plant->increment('quantity', $change)
-                : $plant->decrement('quantity', abs($change));
+                ? $plant->increment('stock', $change)
+                : $plant->decrement('stock', abs($change));
         }
     }
 }

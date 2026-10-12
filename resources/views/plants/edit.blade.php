@@ -6,7 +6,7 @@
     <div class="mb-4">
         <a class="small text-decoration-none text-success" href="{{ route('plants.index') }}"><i class="bi bi-arrow-left me-1"></i>Back to plants</a>
         <h1 class="page-title mt-2 mb-1">Edit plant</h1>
-        <p class="page-subtitle mb-0">Update the details for {{ $plant->plant_name }}.</p>
+        <p class="page-subtitle mb-0">Update the details for {{ $plant->name }}.</p>
     </div>
 
     <form action="{{ route('plants.update', $plant) }}" method="POST">

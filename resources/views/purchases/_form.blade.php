@@ -60,7 +60,7 @@
                 <select class="form-select @error('items.'.$index.'.plant_id') is-invalid @enderror" id="items_{{ $index }}_plant_id" name="items[{{ $index }}][plant_id]" required>
                     <option value="">Choose a plant</option>
                     @foreach ($plants as $plant)
-                        <option value="{{ $plant->id }}" @selected((string) ($item['plant_id'] ?? '') === (string) $plant->id)>{{ $plant->plant_name }}</option>
+                        <option value="{{ $plant->id }}" @selected((string) ($item['plant_id'] ?? '') === (string) $plant->id)>{{ $plant->name }}</option>
                     @endforeach
                 </select>
                 @error('items.'.$index.'.plant_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -89,7 +89,7 @@
             <select class="form-select" id="items___INDEX___plant_id" name="items[__INDEX__][plant_id]" required>
                 <option value="">Choose a plant</option>
                 @foreach ($plants as $plant)
-                    <option value="{{ $plant->id }}">{{ $plant->plant_name }}</option>
+                    <option value="{{ $plant->id }}">{{ $plant->name }}</option>
                 @endforeach
             </select>
         </div>

@@ -30,8 +30,7 @@
                     <thead>
                     <tr>
                         <th class="ps-3 ps-lg-4">Supplier</th>
-                        <th>Contact Number</th>
-                        <th>Address</th>
+                        <th>Contact</th>
                         <th>Purchases</th>
                         <th class="text-end pe-3 pe-lg-4">Actions</th>
                     </tr>
@@ -40,8 +39,7 @@
                     @forelse ($suppliers as $supplier)
                         <tr>
                             <td class="ps-3 ps-lg-4 fw-semibold">{{ $supplier->name }}</td>
-                            <td>{{ $supplier->contact_number }}</td>
-                            <td class="text-secondary">{{ $supplier->address ?: '—' }}</td>
+                            <td>{{ $supplier->contact ?: '—' }}</td>
                             <td><span class="badge rounded-pill text-bg-light">{{ $supplier->purchases_count }}</span></td>
                             <td class="text-end pe-3 pe-lg-4">
                                 <div class="d-inline-flex gap-1">
@@ -56,7 +54,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-5 text-center">
+                            <td colspan="4" class="py-5 text-center">
                                 <i class="bi bi-truck display-6 text-secondary"></i>
                                 <p class="fw-semibold mt-2 mb-1">No suppliers found</p>
                                 <p class="text-secondary small mb-3">Add your first supplier to start recording purchases.</p>

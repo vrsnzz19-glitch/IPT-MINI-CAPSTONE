@@ -22,7 +22,7 @@ class PurchaseFactory extends Factory
             'supplier_id' => Supplier::factory(),
             'purchase_date' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
             'total_amount' => fake()->randomFloat(2, 100, 10000),
-            'status' => fake()->randomElement(['pending', 'received', 'cancelled']),
+            'status' => fake()->randomElement(Purchase::STATUSES),
         ];
     }
 }

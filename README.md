@@ -6,7 +6,7 @@ A beginner-friendly plant nursery inventory and purchasing application built wit
 
 - Live dashboard for plants, total stock, low stock, categories, suppliers, and purchase records.
 - Plant management with search, category filters, stock status, and pagination.
-- Category management with protection against deleting categories that still contain plants.
+- Category management with safe cascading deletion; categories with plants that have purchase history are protected.
 - Supplier management with name search and protection against deleting suppliers with purchase history.
 - Purchase records with a supplier, date, status, multiple plant items, and automatically calculated line subtotals and totals.
 - Purchase filters by supplier and status.
@@ -18,15 +18,15 @@ A beginner-friendly plant nursery inventory and purchasing application built wit
 
 The project has exactly five nursery-domain tables:
 
-1. `categories` has many `plants`.
-2. `plants` belongs to a category and appears in many `purchase_items`.
-3. `suppliers` has many `purchases`.
-4. `purchases` belongs to a supplier and has many `purchase_items`.
-5. `purchase_items` belongs to a purchase and a plant.
+1. `categories` (`id`, `name`, timestamps) has many `plants`.
+2. `suppliers` (`id`, `name`, nullable `contact`, timestamps) has many `purchases`.
+3. `plants` (`id`, `name`, `category_id`, `price`, `stock`, timestamps) belongs to a category and appears in many `purchase_items`.
+4. `purchases` (`id`, `supplier_id`, `purchase_date`, `total_amount`, `status`, timestamps) belongs to a supplier and has many `purchase_items`.
+5. `purchase_items` belongs to a purchase and a plant; it stores the purchased quantity, unit price, and subtotal.
 
 Laravel's framework migrations also create their default `users`, `cache`, `jobs`, session, and related framework tables. These are not nursery-domain tables; the application adds no other project-specific tables.
 
-Purchase statuses are `pending`, `received`, and `cancelled`. Only received purchases update plant stock.
+Purchase statuses are `Pending`, `Received`, and `Cancelled`; the default is `Pending`. Only received purchases update plant stock. Categories and suppliers have cascading foreign keys; purchase items are removed with their purchase.
 
 ## Requirements
 
@@ -63,13 +63,21 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Generate an application key only if `APP_KEY` is empty, then run the migrations and sample seeder:
+Generate an application key only if `APP_KEY` is empty, then run migrations and sample data:
 
 ```powershell
 php artisan key:generate
 php artisan migrate
 php artisan db:seed
 ```
+
+To verify a completely fresh schema instead, back up any important database data first, then run:
+
+```powershell
+php artisan migrate:fresh --seed
+```
+
+`migrate:fresh` drops every table in the configured database before rebuilding it, so use it only when resetting that database is intended.
 
 Start the application:
 

@@ -103,7 +103,7 @@
                     <tr>
                         <th class="ps-3 ps-lg-4">Plant</th>
                         <th>Category</th>
-                        <th>Quantity</th>
+                        <th>Stock</th>
                         <th>Price</th>
                         <th>Status</th>
                     </tr>
@@ -112,16 +112,15 @@
                     @forelse ($recentPlants as $plant)
                         <tr>
                             <td class="ps-3 ps-lg-4">
-                                <div class="fw-semibold">{{ $plant->plant_name }}</div>
-                                <div class="small text-secondary">{{ $plant->scientific_name ?: 'Scientific name not added' }}</div>
+                                <div class="fw-semibold">{{ $plant->name }}</div>
                             </td>
                             <td>{{ $plant->category->name }}</td>
-                            <td>{{ number_format($plant->quantity) }}</td>
+                            <td>{{ number_format($plant->stock) }}</td>
                             <td>₱{{ number_format((float) $plant->price, 2) }}</td>
                             <td>
-                                @if ($plant->quantity === 0)
+                                @if ($plant->stock === 0)
                                     <span class="badge text-bg-secondary">Out of Stock</span>
-                                @elseif ($plant->quantity <= 5)
+                                @elseif ($plant->stock <= 5)
                                     <span class="badge text-bg-warning">Low Stock</span>
                                 @else
                                     <span class="badge text-bg-success">In Stock</span>

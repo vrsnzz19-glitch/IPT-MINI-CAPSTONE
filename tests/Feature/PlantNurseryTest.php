@@ -10,6 +10,8 @@ use App\Models\Supplier;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class PlantNurseryTest extends TestCase
@@ -19,9 +21,9 @@ class PlantNurseryTest extends TestCase
     public function test_dashboard_shows_live_inventory_totals_and_recent_plants(): void
     {
         $category = Category::factory()->create();
-        Plant::factory()->for($category)->create(['plant_name' => 'Out of Stock Fern', 'quantity' => 0]);
-        Plant::factory()->for($category)->create(['plant_name' => 'Low Stock Fern', 'quantity' => 5]);
-        Plant::factory()->for($category)->create(['plant_name' => 'Healthy Fern', 'quantity' => 8]);
+        Plant::factory()->for($category)->create(['name' => 'Out of Stock Fern', 'stock' => 0]);
+        Plant::factory()->for($category)->create(['name' => 'Low Stock Fern', 'stock' => 5]);
+        Plant::factory()->for($category)->create(['name' => 'Healthy Fern', 'stock' => 8]);
 
         $response = $this->get(route('dashboard'));
 
@@ -39,37 +41,35 @@ class PlantNurseryTest extends TestCase
     {
         $category = Category::factory()->create();
         $plantData = [
-            'plant_name' => 'Jade Plant',
-            'scientific_name' => 'Crassula ovata',
+            'name' => 'Jade Plant',
             'category_id' => $category->id,
-            'quantity' => 7,
+            'stock' => 7,
             'price' => '125.50',
-            'description' => 'A resilient indoor succulent.',
         ];
 
         $this->post(route('plants.store'), $plantData)
             ->assertRedirect(route('plants.index'))
             ->assertSessionHas('success');
 
-        $plant = Plant::query()->where('plant_name', 'Jade Plant')->firstOrFail();
+        $plant = Plant::query()->where('name', 'Jade Plant')->firstOrFail();
         $this->assertDatabaseHas('plants', [
             'id' => $plant->id,
             'category_id' => $category->id,
-            'quantity' => 7,
+            'stock' => 7,
             'price' => '125.50',
         ]);
 
         $this->put(route('plants.update', $plant), [
             ...$plantData,
-            'plant_name' => 'Updated Jade Plant',
-            'quantity' => 12,
+            'name' => 'Updated Jade Plant',
+            'stock' => 12,
         ])->assertRedirect(route('plants.index'))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('plants', [
             'id' => $plant->id,
-            'plant_name' => 'Updated Jade Plant',
-            'quantity' => 12,
+            'name' => 'Updated Jade Plant',
+            'stock' => 12,
         ]);
 
         $this->delete(route('plants.destroy', $plant))
@@ -84,17 +84,17 @@ class PlantNurseryTest extends TestCase
         $this->from(route('plants.create'))
             ->post(route('plants.store'), [])
             ->assertRedirect(route('plants.create'))
-            ->assertSessionHasErrors(['plant_name', 'category_id', 'quantity', 'price']);
+            ->assertSessionHasErrors(['name', 'category_id', 'stock', 'price']);
 
         $this->from(route('plants.create'))
             ->post(route('plants.store'), [
-                'plant_name' => 'Invalid Plant',
+                'name' => 'Invalid Plant',
                 'category_id' => 999999,
-                'quantity' => -1,
+                'stock' => -1,
                 'price' => -10,
             ])
             ->assertRedirect(route('plants.create'))
-            ->assertSessionHasErrors(['category_id', 'quantity', 'price']);
+            ->assertSessionHasErrors(['category_id', 'stock', 'price']);
     }
 
     public function test_plant_with_purchase_history_cannot_be_deleted(): void
@@ -113,9 +113,9 @@ class PlantNurseryTest extends TestCase
     {
         $flowers = Category::factory()->create(['name' => 'Flowers']);
         $herbs = Category::factory()->create(['name' => 'Herbs']);
-        Plant::factory()->for($flowers)->create(['plant_name' => 'Red Rose']);
-        Plant::factory()->for($flowers)->create(['plant_name' => 'White Rose']);
-        Plant::factory()->for($herbs)->create(['plant_name' => 'Rosemary']);
+        Plant::factory()->for($flowers)->create(['name' => 'Red Rose']);
+        Plant::factory()->for($flowers)->create(['name' => 'White Rose']);
+        Plant::factory()->for($herbs)->create(['name' => 'Rosemary']);
 
         $this->get(route('plants.index', ['search' => 'Rose', 'category_id' => $flowers->id]))
             ->assertOk()
@@ -134,7 +134,6 @@ class PlantNurseryTest extends TestCase
     {
         $this->post(route('categories.store'), [
             'name' => 'Indoor Plants',
-            'description' => 'Plants suited to indoor spaces.',
         ])->assertRedirect(route('categories.index'))
             ->assertSessionHas('success');
 
@@ -143,7 +142,6 @@ class PlantNurseryTest extends TestCase
 
         $this->put(route('categories.update', $category), [
             'name' => 'Indoor Greenery',
-            'description' => 'Updated category details.',
         ])->assertRedirect(route('categories.index'))
             ->assertSessionHas('success');
 
@@ -159,24 +157,38 @@ class PlantNurseryTest extends TestCase
         $this->assertDatabaseMissing('categories', ['id' => $category->id]);
     }
 
-    public function test_category_with_plants_cannot_be_deleted(): void
+    public function test_deleting_category_cascades_to_plants_without_purchase_history(): void
     {
         $category = Category::factory()->create();
-        Plant::factory()->for($category)->create();
+        $plant = Plant::factory()->for($category)->create();
+
+        $this->delete(route('categories.destroy', $category))
+            ->assertRedirect(route('categories.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('categories', ['id' => $category->id]);
+        $this->assertDatabaseMissing('plants', ['id' => $plant->id]);
+    }
+
+    public function test_category_with_purchase_history_cannot_be_deleted(): void
+    {
+        $category = Category::factory()->create();
+        $plant = Plant::factory()->for($category)->create();
+        PurchaseItem::factory()->for($plant)->create();
 
         $this->delete(route('categories.destroy', $category))
             ->assertRedirect(route('categories.index'))
             ->assertSessionHas('error');
 
         $this->assertModelExists($category);
+        $this->assertModelExists($plant);
     }
 
     public function test_supplier_can_be_created_updated_and_deleted_without_purchase_history(): void
     {
         $supplierData = [
             'name' => 'Green Corner Nursery',
-            'contact_number' => '0917-100-2000',
-            'address' => '15 Garden Road',
+            'contact' => '0917-100-2000',
         ];
 
         $this->post(route('suppliers.store'), $supplierData)
@@ -218,8 +230,8 @@ class PlantNurseryTest extends TestCase
     public function test_pending_purchase_can_be_received_and_edits_adjust_inventory_and_totals(): void
     {
         $supplier = Supplier::factory()->create();
-        $firstPlant = Plant::factory()->create(['quantity' => 5]);
-        $secondPlant = Plant::factory()->create(['quantity' => 1]);
+        $firstPlant = Plant::factory()->create(['stock' => 5]);
+        $secondPlant = Plant::factory()->create(['stock' => 1]);
         $purchaseData = [
             'supplier_id' => $supplier->id,
             'purchase_date' => '2026-10-05',
@@ -241,8 +253,8 @@ class PlantNurseryTest extends TestCase
             'total_amount' => '26.75',
             'status' => Purchase::STATUS_PENDING,
         ]);
-        $this->assertDatabaseHas('plants', ['id' => $firstPlant->id, 'quantity' => 5]);
-        $this->assertDatabaseHas('plants', ['id' => $secondPlant->id, 'quantity' => 1]);
+        $this->assertDatabaseHas('plants', ['id' => $firstPlant->id, 'stock' => 5]);
+        $this->assertDatabaseHas('plants', ['id' => $secondPlant->id, 'stock' => 1]);
 
         $this->put(route('purchases.update', $purchase), [
             ...$purchaseData,
@@ -250,8 +262,8 @@ class PlantNurseryTest extends TestCase
         ])->assertRedirect(route('purchases.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('plants', ['id' => $firstPlant->id, 'quantity' => 7]);
-        $this->assertDatabaseHas('plants', ['id' => $secondPlant->id, 'quantity' => 4]);
+        $this->assertDatabaseHas('plants', ['id' => $firstPlant->id, 'stock' => 7]);
+        $this->assertDatabaseHas('plants', ['id' => $secondPlant->id, 'stock' => 4]);
 
         $this->put(route('purchases.update', $purchase), [
             ...$purchaseData,
@@ -262,8 +274,8 @@ class PlantNurseryTest extends TestCase
         ])->assertRedirect(route('purchases.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('plants', ['id' => $firstPlant->id, 'quantity' => 6]);
-        $this->assertDatabaseHas('plants', ['id' => $secondPlant->id, 'quantity' => 1]);
+        $this->assertDatabaseHas('plants', ['id' => $firstPlant->id, 'stock' => 6]);
+        $this->assertDatabaseHas('plants', ['id' => $secondPlant->id, 'stock' => 1]);
         $this->assertDatabaseHas('purchases', ['id' => $purchase->id, 'total_amount' => '12.50']);
         $this->assertDatabaseCount('purchase_items', 1);
 
@@ -273,13 +285,13 @@ class PlantNurseryTest extends TestCase
         ])->assertRedirect(route('purchases.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('plants', ['id' => $firstPlant->id, 'quantity' => 5]);
+        $this->assertDatabaseHas('plants', ['id' => $firstPlant->id, 'stock' => 5]);
         $this->assertDatabaseHas('purchases', ['id' => $purchase->id, 'status' => Purchase::STATUS_CANCELLED]);
     }
 
     public function test_deleting_a_received_purchase_removes_its_stock_and_items(): void
     {
-        $plant = Plant::factory()->create(['quantity' => 8]);
+        $plant = Plant::factory()->create(['stock' => 8]);
         $purchase = Purchase::factory()->create(['status' => Purchase::STATUS_RECEIVED]);
         PurchaseItem::factory()->for($purchase)->for($plant)->create([
             'quantity' => 3,
@@ -291,14 +303,14 @@ class PlantNurseryTest extends TestCase
             ->assertRedirect(route('purchases.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'quantity' => 5]);
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'stock' => 5]);
         $this->assertDatabaseMissing('purchases', ['id' => $purchase->id]);
         $this->assertDatabaseCount('purchase_items', 0);
     }
 
     public function test_received_purchase_cannot_be_reversed_below_zero_stock(): void
     {
-        $plant = Plant::factory()->create(['quantity' => 2]);
+        $plant = Plant::factory()->create(['stock' => 2]);
         $purchase = Purchase::factory()->create(['status' => Purchase::STATUS_RECEIVED]);
         PurchaseItem::factory()->for($purchase)->for($plant)->create([
             'quantity' => 3,
@@ -318,7 +330,7 @@ class PlantNurseryTest extends TestCase
             ->assertRedirect(route('purchases.edit', $purchase))
             ->assertSessionHasErrors('status');
 
-        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'quantity' => 2]);
+        $this->assertDatabaseHas('plants', ['id' => $plant->id, 'stock' => 2]);
         $this->assertDatabaseHas('purchases', ['id' => $purchase->id, 'status' => Purchase::STATUS_RECEIVED]);
     }
 
@@ -394,7 +406,57 @@ class PlantNurseryTest extends TestCase
         $this->assertDatabaseCount('suppliers', 2);
         $this->assertDatabaseCount('purchases', 2);
         $this->assertDatabaseCount('purchase_items', 4);
-        $this->assertDatabaseHas('plants', ['plant_name' => 'Peace Lily', 'quantity' => 28]);
-        $this->assertDatabaseHas('plants', ['plant_name' => 'Tomato', 'quantity' => 20]);
+        $this->assertDatabaseHas('plants', ['name' => 'Peace Lily', 'stock' => 28]);
+        $this->assertDatabaseHas('plants', ['name' => 'Tomato', 'stock' => 20]);
+    }
+
+    public function test_five_domain_migrations_create_the_exact_columns_and_order(): void
+    {
+        $expectedMigrations = [
+            '2026_10_12_150001_create_categories_table',
+            '2026_10_12_150002_create_suppliers_table',
+            '2026_10_12_150003_create_plants_table',
+            '2026_10_12_150004_create_purchases_table',
+            '2026_10_12_150005_create_purchase_items_table',
+        ];
+
+        $this->assertSame(
+            $expectedMigrations,
+            DB::table('migrations')
+                ->whereIn('migration', $expectedMigrations)
+                ->orderBy('batch')
+                ->orderBy('migration')
+                ->pluck('migration')
+                ->all(),
+        );
+        $this->assertSame(['id', 'name', 'created_at', 'updated_at'], Schema::getColumnListing('categories'));
+        $this->assertSame(['id', 'name', 'contact', 'created_at', 'updated_at'], Schema::getColumnListing('suppliers'));
+        $this->assertSame(['id', 'name', 'category_id', 'price', 'stock', 'created_at', 'updated_at'], Schema::getColumnListing('plants'));
+        $this->assertSame(['id', 'supplier_id', 'purchase_date', 'total_amount', 'status', 'created_at', 'updated_at'], Schema::getColumnListing('purchases'));
+        $this->assertSame(['id', 'purchase_id', 'plant_id', 'quantity', 'unit_price', 'subtotal', 'created_at', 'updated_at'], Schema::getColumnListing('purchase_items'));
+
+        $supplier = Supplier::factory()->create();
+        $purchase = Purchase::create([
+            'supplier_id' => $supplier->id,
+            'purchase_date' => '2026-10-05',
+            'total_amount' => '10.00',
+        ]);
+
+        $purchase->refresh();
+        $this->assertSame(Purchase::STATUS_PENDING, $purchase->status);
+    }
+
+    public function test_supplier_deletion_cascades_to_purchases_and_purchase_items(): void
+    {
+        $supplier = Supplier::factory()->create();
+        $plant = Plant::factory()->create();
+        $purchase = Purchase::factory()->for($supplier)->create();
+        $purchaseItem = PurchaseItem::factory()->for($purchase)->for($plant)->create();
+
+        $supplier->delete();
+
+        $this->assertDatabaseMissing('purchases', ['id' => $purchase->id]);
+        $this->assertDatabaseMissing('purchase_items', ['id' => $purchaseItem->id]);
+        $this->assertModelExists($plant);
     }
 }
